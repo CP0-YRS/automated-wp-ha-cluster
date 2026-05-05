@@ -1,0 +1,38 @@
+---
+
+- name: Deployer Wordpress avec Docker Compose
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: Creer le dossier du projet
+      file:
+        path: /opt/wordpress
+        state: directory
+
+    - name: Creer le fichier docker-compose.yml
+      copy:
+        dest: /opt/wordpress/docker-compose.yml
+        content: |
+          version: '3.8'
+          services:
+            wordpress:
+              image: wordpress
+              ports:
+                - "8080:80"
+              environment:
+                WORDPRESS_DB_HOST: 172.17.6.171
+                WORDPRESS_DB_USER: root
+                WORDPRESS_DB_PASSWORD: secret
+                WORDPRESS_DB_NAME: wordpress
+
+    - name: Nettoyer les anciens containers bugges
+      command: docker-compose down
+      args:
+        chdir: /opt/wordpress
+      ignore_errors: yes
+
+    - name: Lancer les containers
+      command: docker-compose up -d
+      args:
+        chdir: /opt/wordpress
